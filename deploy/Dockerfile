@@ -20,6 +20,7 @@ RUN corepack enable \
     && pnpm run build:official \
     && pnpm --dir native/system run build:ts \
     && pnpm --dir native/system run build:native \
+    && sed -i "s|'link:vendor/|'file:vendor/|g" pnpm-workspace.yaml \
     && pnpm --filter @deepseek-ai/dsh deploy --prod --legacy /opt/dsh
 
 FROM node:24-trixie-slim AS runtime
