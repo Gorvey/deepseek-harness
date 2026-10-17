@@ -1,0 +1,49 @@
+services:
+  deepseek-harness:
+    image: ${DSH_IMAGE:?Set DSH_IMAGE to the published image digest}
+    container_name: deepseek-harness
+    restart: unless-stopped
+    init: false
+    mem_limit: 768m
+    pids_limit: 256
+    stop_grace_period: 45s
+    environment:
+      DSH_BIND: 172.30.20.10
+      DSH_TELEMETRY_DISABLED: "1"
+    command:
+      - web
+      - --no-open
+      - --host
+      - 172.30.20.10
+      - --port
+      - "3080"
+      - --public-url
+      - https://dsh.cooool.fun/
+      - --trusted-host
+      - dsh.cooool.fun
+    volumes:
+      - ./data/dsh:/home/node/.dsh
+      - ./data/agents:/home/node/.agents
+      - ./workspaces:/workspace
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://'+process.env.DSH_BIND+':3080/').then(r=>{if(r.status!==401)process.exit(1)}).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      start_period: 120s
+      retries: 3
+    networks:
+      dsh-net:
+        ipv4_address: 172.30.20.10
+
+networks:
+  dsh-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.20.0/24
