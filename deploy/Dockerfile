@@ -21,7 +21,7 @@ RUN corepack enable \
     && pnpm --dir native/system run build:ts \
     && pnpm --dir native/system run build:native \
     && sed -i "s|'link:vendor/|'file:vendor/|g" pnpm-workspace.yaml \
-    && pnpm --filter @deepseek-ai/dsh deploy --prod --legacy /opt/dsh
+    && pnpm --filter dsh-python-runtime-closure deploy --prod --legacy /opt/dsh
 
 FROM node:24-trixie-slim AS runtime
 
@@ -35,8 +35,8 @@ RUN apt-get update \
 COPY --from=build /opt/dsh /opt/dsh
 COPY deploy/entrypoint.sh /usr/local/bin/dsh-container
 RUN chmod 0755 /usr/local/bin/dsh-container \
-    && chmod 0755 /opt/dsh/lib/bin.js \
-    && ln -s /opt/dsh/lib/bin.js /usr/local/bin/dsh \
+    && chmod 0755 /opt/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js \
+    && ln -s /opt/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js /usr/local/bin/dsh \
     && mkdir -p /home/node/.dsh /home/node/.agents /workspace \
     && chown node:node /home/node/.dsh /home/node/.agents /workspace
 
@@ -51,6 +51,7 @@ ENV NODE_ENV=production \
     DSH_TELEMETRY_DISABLED=1
 
 USER node
+RUN node /opt/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js --version
 WORKDIR /workspace
 EXPOSE 3080
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/dsh-container"]
