@@ -29,8 +29,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
       ca-certificates curl git openssh-client python3 ripgrep tini \
     && rm -rf /var/lib/apt/lists/* \
-    && corepack enable \
-    && corepack prepare pnpm@11.28.5 --activate
+    && npm install --global --no-audit --no-fund pnpm@11.28.5
 
 COPY --from=build /opt/dsh /opt/dsh
 COPY deploy/entrypoint.sh /usr/local/bin/dsh-container
@@ -51,7 +50,8 @@ ENV NODE_ENV=production \
     DSH_TELEMETRY_DISABLED=1
 
 USER node
-RUN node /opt/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js --version
+RUN test "$(pnpm --version)" = 11.28.5 \
+    && node /opt/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js --version
 WORKDIR /workspace
 EXPOSE 3080
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/dsh-container"]
